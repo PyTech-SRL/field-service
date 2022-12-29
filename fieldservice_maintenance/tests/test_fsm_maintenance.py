@@ -68,20 +68,35 @@ class TestFSMMaintenance(TransactionCase):
 
         # Catch user error for no location set on equipment when creating
         # a maintenance request
+        # fsm_equip_01.current_location_id = False
+        # with self.assertRaises(UserError) as e:
+        #     self.env["maintenance.request"].create(
+        #         {
+        #             "name": "Equip 01 Request",
+        #             "equipment_id": maint_equip_01.id,
+        #         }
+        #     )
+        # self.assertEqual(
+        #     e.exception.args[0],
+        #     (("Missing current location on FSM equipment %s") % fsm_equip_01.name),
+        #     """FSM Maintenance: UserError not thrown when creating maintenance
+        #        request for equipment without FSM location""",
+        # )
+
+        # Test maintenance creation without a location_id does not break anything
         fsm_equip_01.current_location_id = False
-        with self.assertRaises(UserError) as e:
+        try:
             self.env["maintenance.request"].create(
                 {
                     "name": "Equip 01 Request",
                     "equipment_id": maint_equip_01.id,
                 }
             )
-        self.assertEqual(
-            e.exception.args[0],
-            (("Missing current location on FSM equipment %s") % fsm_equip_01.name),
-            """FSM Maintenance: UserError not thrown when creating maintenance
-               request for equipment without FSM location""",
-        )
+        except UserError:
+            self.fail(
+                """FSM Maintenance: UserError was thrown when creating maintenance
+                    request for equipment without FSM location"""
+            )
 
         # Deleting the FSM Equipment
         fsm_equip_01.unlink()
